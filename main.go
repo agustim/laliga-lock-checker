@@ -22,6 +22,7 @@ var (
 	endpoint     string
 	vpnAddress   string
 	fwmark       string
+	startTime    string
 )
 
 const (
@@ -79,8 +80,11 @@ func main() {
 
 	fileInfo, _ := csvFile.Stat()
 	if fileInfo.Size() == 0 {
-		writer.Write([]string{"hora", "domini", "estat", "latencia_ms"})
+		writer.Write([]string{"start_time", "hora", "domini", "estat", "latencia_ms"})
 	}
+
+	// Get the current time like startTime
+	startTime = time.Now().Format("2006-01-02 15:04:05")
 
 	for _, url := range urls {
 		printDebug("Provant: " + url)
@@ -120,7 +124,7 @@ func main() {
 		}
 
 		now := time.Now().Format("2006-01-02 15:04:05")
-		writer.Write([]string{now, url, status, fmt.Sprintf("%d", latency)})
+		writer.Write([]string{startTime, now, url, status, fmt.Sprintf("%d", latency)})
 	}
 }
 
@@ -146,7 +150,9 @@ func checkURLWithLatency(url string) (bool, time.Duration) {
 		return false, elapsed
 	}
 	defer resp.Body.Close()
-	return resp.StatusCode == 200, elapsed
+
+	// If 200 or 301 or 302, return true
+	return (resp.StatusCode == 200 || resp.StatusCode == 301 || resp.StatusCode == 302), elapsed
 }
 
 func isVPNActive() bool {
